@@ -38,11 +38,11 @@ return [
         ],
 
         'view' => [
-            'theme' =>[
+            'theme' => [
                 'basePath' => '@app/themes/test',
-                'basePUrl' => '@web/themes/test',
+                'baseUrl' => '@web/themes/test',
                 'pathMap' => [
-                    '@app/views' => '@app/themes/test'
+                    '@app/views' => '@app/themes/test',
                 ],
             ],
         ],
