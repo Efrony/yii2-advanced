@@ -18,10 +18,9 @@ return [
         'user' => [
             'identityClass' => 'common\models\User',
             'enableAutoLogin' => true,
-            'identityCookie' => ['name' => '_identity', 'httpOnly' => true],
+            'identityCookie' => ['name' => '_identity', 'httpOnly' => true, 'domain' => '.yii2advanced.gb'],
         ],
         'session' => [
-            // this is the name of the session cookie used for login on the frontend
             'name' => 'advanced',
         ],
         'log' => [
@@ -36,17 +35,6 @@ return [
         'errorHandler' => [
             'errorAction' => 'site/error',
         ],
-
-        'view' => [
-            'theme' => [
-                'basePath' => '@app/themes/test',
-                'baseUrl' => '@web/themes/test',
-                'pathMap' => [
-                    '@app/views' => '@app/themes/test',
-                ],
-            ],
-        ],
-
 
         'urlManager' => [
             'enablePrettyUrl' => true,

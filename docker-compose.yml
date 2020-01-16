@@ -6,7 +6,6 @@ services:
     build: frontend
     ports:
       - 20080:80
-      - 8081:8081
     volumes:
       # Re-use local composer cache via host-volume
       - ~/.composer-docker/cache:/root/.composer/cache:delegated
@@ -23,25 +22,13 @@ services:
       # Mount source-code for development
       - ./:/app
 
-  db:
-    image: mysql
-    command: --default-authentication-plugin=mysql_native_password
-    #restart: always
-    hostname: 127.0.0.1
-    ports:
-      - '3306:3306'
+  mysql:
+    image: mysql:5.7
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: yii2_db
-
-
-#  mysql:
-#    image: mysql:5.7
-#    environment:
-#      - MYSQL_ROOT_PASSWORD=verysecret
-#      - MYSQL_DATABASE=yii2advanced
-#      - MYSQL_USER=yii2advanced
-#      - MYSQL_PASSWORD=secret
+      - MYSQL_ROOT_PASSWORD=verysecret
+      - MYSQL_DATABASE=yii2advanced
+      - MYSQL_USER=yii2advanced
+      - MYSQL_PASSWORD=secret
 
   #pgsql:
   #  image: postgres:9.5
