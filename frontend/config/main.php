@@ -18,7 +18,7 @@ return [
         'user' => [
             'identityClass' => 'common\models\User',
             'enableAutoLogin' => true,
-            'identityCookie' => ['name' => '_identity', 'httpOnly' => true, 'domain' => '.yii2advanced.gb'],
+            'identityCookie' => ['name' => '_identity', 'httpOnly' => true, 'domain' => '.yii2.adv'],
         ],
         'session' => [
             'name' => 'advanced',

@@ -1,4 +1,4 @@
-let chat = new WebSocket('ws://front.yii2advanced.gb:8080');
+let chat = new WebSocket('ws://yii2.adv:8080');
 let username = $('.js-username').val();
 let SHOW_HISTORY = 1;
 let SEND_MESSAGE = 2;
