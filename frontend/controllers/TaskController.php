@@ -4,7 +4,7 @@
 namespace frontend\controllers;
 
 
-use frontend\models\Task;
+use common\models\Task;
 use yii\web\Controller;
 use Yii;
 use yii\data\ActiveDataProvider;
@@ -14,6 +14,11 @@ use yii\filters\PageCache;
 use yii\filters\AccessControl;
 use yii\helpers\VarDumper;
 use yii\web\NotFoundHttpException;
+use yii\helpers\ArrayHelper;
+use frontend\models\search\TaskSearch;
+use common\models\TaskAttachmentsAddForm;
+use common\models\TaskComments;
+use yii\web\UploadedFile;
 
 
 class TaskController extends Controller
@@ -26,7 +31,7 @@ class TaskController extends Controller
                 'rules' => [
                     [
                         'allow' => true,
-                        'actions' => ['index', 'create', 'view', 'update', 'delete', 'submit'],
+                        'actions' => ['index', 'create', 'view', 'update', 'delete', 'addattachment', 'addcomment'],
                         'roles' => ['@']
                     ],
                 ],
@@ -37,20 +42,12 @@ class TaskController extends Controller
 
     public function actionIndex($sort = false)
     {
-        $query = Task::find();
-        if (!Yii::$app->user->can('admin')){
-            $query->andWhere(['userID'=>Yii::$app->user->id]);
-        }
-
-        $provider = new ActiveDataProvider([
-            'query' => $query,
-            'pagination' => [
-                'validatePage' => false
-            ]
-        ]);
+        $searchModel = new TaskSearch();
+        $provider = $searchModel->search(Yii::$app->request->queryParams);
 
         return $this->render('index', [
-            'provider' => $provider
+            'provider' => $provider,
+            'searchModel' => $searchModel,
         ]);
     }
 
@@ -65,9 +62,12 @@ class TaskController extends Controller
             Yii::$app->cache->set($cacheKey, $model);
         }*/
         $model = Task::findOne($id);
-        if (Yii::$app->user->can('manager') || Yii::$app->user->can('admin') || $model->userID == Yii::$app->user->id) {
+        if (Yii::$app->user->can('manager') || Yii::$app->user->can('admin') || $model->author_id == Yii::$app->user->id) {
             return $this->render('view',
-                compact('model'));
+                ['model' => $model,
+                'taskAttachmentForm' => new TaskAttachmentsAddForm(),
+                'taskCommentForm' => new TaskComments(),
+                ]);
         }  else {
             throw new NotFoundHttpException();
         }
@@ -75,23 +75,38 @@ class TaskController extends Controller
 
     public function actionCreate(){
         $model = new Task();
-        return $this->render('create',
-            ['model' => $model]
-        );
+
+        if ($model->load(Yii::$app->request->post()) && $model->save()) {
+            return $this->redirect(['view', 'id' => $model->id]);
+        }
+
+        $templates = Task::find()->where(['is_template'=>true])->all();
+        $templates = ArrayHelper::map($templates, 'id', 'title');
+
+        return $this->render('create', [
+            'model' => $model,
+            'templates'=>$templates
+        ]);
     }
 
     public function actionUpdate(int $id = null)
     {
         if (!empty($id)) {
             $model = Task::findOne($id);
-            if ($model->userID == Yii::$app->user->id) {
+            if ($model->author_id == Yii::$app->user->id) {
                 if ($model->load(Yii::$app->request->post()) and $model->validate()) {
                     if ($model->save()) {
                         return $this->redirect(["task/view?id=$model->id"]);
                     }
                 }
-                return $this->render('edit', [
-                    'model' => $model
+
+                $templates = Task::find()->where(['is_template'=>true])->all();
+                $templates = ArrayHelper::map($templates, 'id', 'title');
+
+                return $this->render('update', [
+                    'model' => $model,
+                    'templates'=>[]
+
                 ]);
             } else {
                 throw new NotFoundHttpException();
@@ -102,7 +117,7 @@ class TaskController extends Controller
     public function actionDelete(int $id )
     {
         $model = Task::findOne($id);
-        if (Yii::$app->user->can('manager') || Yii::$app->user->can('admin') || $model->userID == Yii::$app->user->id) {
+        if (Yii::$app->user->can('manager') || Yii::$app->user->can('admin') || $model->author_id == Yii::$app->user->id) {
             $model->delete();
             return $this->redirect(['index']);
         }else{
@@ -110,14 +125,28 @@ class TaskController extends Controller
         }
     }
 
-    public function actionSubmit()
+
+    public function actionAddattachment()
     {
-        $model = new Task();
-        if ($model->load(Yii::$app->request->post())) {
-            if ($model->validate()) {
-                $model->save();
-            }
-            return $this->redirect(['index']);
+        $model = new TaskAttachmentsAddForm();
+        $model->load(\Yii::$app->request->post());
+        $model->attachment = UploadedFile::getInstance($model, 'attachment');
+        if ($model->save()) {
+            \Yii::$app->session->setFlash('success', "Файл добавлен");
+        } else {
+            \Yii::$app->session->setFlash('error', "Не удалось добавить файл");
         }
+        $this->redirect(\Yii::$app->request->referrer);
+    }
+
+    public function actionAddcomment()
+    {
+        $model = new TaskComments();
+        if ($model->load(\Yii::$app->request->post()) && $model->save()) {
+            \Yii::$app->session->setFlash('success', "Комментарий добавлен");
+        } else {
+            \Yii::$app->session->setFlash('error', "Не удалось добавить комментарий");
+        }
+        $this->redirect(\Yii::$app->request->referrer);
     }
 }
